@@ -1,12 +1,13 @@
 {
   "name": "xenon87/rector-personal-rules",
   "version": "1.0.0",
+  "type": "library",
   "require-dev": {
     "rector/rector": "^0.13.6",
     "phpunit/phpunit": "^9.5"
   },
   "autoload": {
-    "psr-4": {
+    "psr-0": {
       "Utils\\Rector\\": "utils/rector/src"
     }
   },
