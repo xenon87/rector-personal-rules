@@ -69,15 +69,26 @@ CODE_SAMPLE
             /** @var array<string, Node\Identifier> $aliases */
             $aliases = [];
 
+            /** @var array<string, int> $aliases */
+            $types = [];
+
             $count = 0;
 
             foreach ($node->stmts as $currentNode) {
                 if ($currentNode instanceof Node\Stmt\Use_) {
                     foreach ($currentNode->uses as $use) {
                         $alias = $use->getAlias();
-                        $aliasLength = count($alias->getAttributes()) > 0 ? mb_strlen($alias->name) : 0;
-                        $order[$use->name->toString()] = mb_strlen($use->name->toString()) + $aliasLength;
                         $aliases[$use->name->toString()] = $alias;
+                        $types[$use->name->toString()] = $use->getAttribute('parent')->type;
+
+                        $aliasLength = count($alias->getAttributes()) > 0 ? mb_strlen($alias->name) : 0;
+                        $typeLength = 0;
+
+                        if( $use->getAttribute('parent')->type == Node\Stmt\Use_::TYPE_FUNCTION || $use->getAttribute('parent')->type == Node\Stmt\Use_::TYPE_CONSTANT) {
+                            $typeLength = 7;
+                        }
+
+                        $order[$use->name->toString()] = mb_strlen($use->name->toString()) + $aliasLength + $typeLength;
                     }
                 }
             }
@@ -91,6 +102,7 @@ CODE_SAMPLE
                         $currentIndex = $order[$count++];
                         $use->alias = count($aliases[$currentIndex]->getAttributes()) > 0 ? $aliases[$currentIndex] : null;
                         $use->name = new Node\Name($currentIndex);
+                        $use->getAttribute('parent')->type = $types[$currentIndex];
                     }
                 }
             }
