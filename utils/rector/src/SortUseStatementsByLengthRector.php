@@ -3,12 +3,10 @@
     namespace Utils\Rector;
 
     use PhpParser\Node;
-    use PhpParser\NodeTraverser;
-    use Rector\Core\Exception\ShouldNotHappenException;
     use Rector\Core\Rector\AbstractRector;
-    use Symplify\RuleDocGenerator\ValueObject\CodeSample\CodeSample;
     use Symplify\RuleDocGenerator\ValueObject\RuleDefinition;
-    use Utils\Rector\NodeVisitor\UsingLengthVisitor;
+    use Rector\Core\PhpParser\Node\CustomNode\FileWithoutNamespace;
+    use Symplify\RuleDocGenerator\ValueObject\CodeSample\CodeSample;
     use Utils\Rector\Tests\Rector\SortUseStatementsByLengthRector\Fixture\SortUseStatementsByLengthRectorTest;
 
     /**
@@ -16,30 +14,6 @@
      */
     final class SortUseStatementsByLengthRector extends AbstractRector
     {
-        /** @var array<string> */
-        private array $order = [];
-        private int $index = 0;
-
-        /**
-         * @throws ShouldNotHappenException
-         */
-        public function beforeTraverse(array $nodes): ?array
-        {
-            $visitor       = new UsingLengthVisitor();
-            $nodeTraverser = new NodeTraverser();
-            $nodeTraverser->addVisitor($visitor);
-            $nodeTraverser->traverse($nodes);
-            $this->order = array_keys($visitor->getOrderedList());
-            $this->index = 0;
-            return parent::beforeTraverse($nodes);
-        }
-
-        public function afterTraverse(array $nodes)
-        {
-            $this->order = [];
-            return parent::afterTraverse($nodes);
-        }
-
         public function getRuleDefinition(): RuleDefinition
         {
             return new RuleDefinition(
@@ -83,13 +57,35 @@ CODE_SAMPLE
          */
         public function getNodeTypes(): array
         {
-            return [Node\Stmt\UseUse::class];
+            return [Node\Stmt\Namespace_::class, FileWithoutNamespace::class];
         }
 
-        /** @param Node\Stmt\UseUse $node */
+        /** @param Node\Stmt\Namespace_|FileWithoutNamespace $node */
         public function refactor(Node $node): ?Node
         {
-            $node->name = new Node\Name($this->order[$this->index++]);
+            /** @var array<string, int> */
+            $order = [];
+            $count = 0;
+
+            foreach ($node->stmts as $currentNode) {
+                if ($currentNode instanceof Node\Stmt\Use_) {
+                    foreach ($currentNode->uses as $use) {
+                        $order[$use->name->toString()] = mb_strlen($use->name->toString());
+                    }
+                }
+            }
+
+            array_multisort(array_values($order), SORT_ASC, array_keys($order), SORT_ASC, $order);
+            $order = array_keys($order);
+
+            foreach ($node->stmts as $currentNode) {
+                if ($currentNode instanceof Node\Stmt\Use_) {
+                    foreach ($currentNode->uses as $use) {
+                        $use->name = new Node\Name($order[$count++]);
+                    }
+                }
+            }
+
             return null;
         }
     }
