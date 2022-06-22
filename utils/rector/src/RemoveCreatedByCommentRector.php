@@ -9,7 +9,6 @@
     use Symplify\RuleDocGenerator\ValueObject\CodeSample\CodeSample;
     use Symplify\RuleDocGenerator\ValueObject\RuleDefinition;
     use Utils\Rector\Tests\Rector\SortUseStatementsByLengthRector\RemoveCreatedByCommentRectorTest;
-    use function Symfony\Component\String\u;
 
     /** @see RemoveCreatedByCommentRectorTest */
     class RemoveCreatedByCommentRector extends AbstractRector
@@ -104,8 +103,8 @@ CODE_SAMPLE
             $removal = [];
 
             foreach ($comments as $comment) {
-                $commentText = u($comment->getText());
-                if($commentText->containsAny('Created by ') && $commentText->containsAny('Time:')) {
+                $commentText = $comment->getText();
+                if(str_contains($commentText, 'Created by ') && str_contains($commentText, 'Time:')) {
                     $removal[] = $comment;
                 }
             }
