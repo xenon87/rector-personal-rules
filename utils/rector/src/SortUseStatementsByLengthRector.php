@@ -65,12 +65,19 @@ CODE_SAMPLE
         {
             /** @var array<string, int> */
             $order = [];
+
+            /** @var array<string, Node\Identifier> $aliases */
+            $aliases = [];
+
             $count = 0;
 
             foreach ($node->stmts as $currentNode) {
                 if ($currentNode instanceof Node\Stmt\Use_) {
                     foreach ($currentNode->uses as $use) {
-                        $order[$use->name->toString()] = mb_strlen($use->name->toString());
+                        $alias = $use->getAlias();
+                        $aliasLength = count($alias->getAttributes()) > 0 ? mb_strlen($alias->name) : 0;
+                        $order[$use->name->toString()] = mb_strlen($use->name->toString()) + $aliasLength;
+                        $aliases[$use->name->toString()] = $alias;
                     }
                 }
             }
@@ -81,7 +88,9 @@ CODE_SAMPLE
             foreach ($node->stmts as $currentNode) {
                 if ($currentNode instanceof Node\Stmt\Use_) {
                     foreach ($currentNode->uses as $use) {
-                        $use->name = new Node\Name($order[$count++]);
+                        $currentIndex = $order[$count++];
+                        $use->alias = count($aliases[$currentIndex]->getAttributes()) > 0 ? $aliases[$currentIndex] : null;
+                        $use->name = new Node\Name($currentIndex);
                     }
                 }
             }
