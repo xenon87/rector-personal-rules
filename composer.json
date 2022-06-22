@@ -1,6 +1,6 @@
 {
   "name": "xenon87/rector-personal-rules",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "library",
   "require-dev": {
     "rector/rector": "^0.13.6",
